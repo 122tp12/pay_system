@@ -1,285 +1,419 @@
 ﻿using System;
 using users;
+using pay_system;
 using System.Collections;
 using System.Collections.Generic;
 using static System.Console;
-using System.Reflection.Metadata;
+using System.Data.SqlClient;
+using System.Configuration;
+using System.Xml;
+using System.Xml.Linq;
+using System.Runtime.Remoting.Services;
 
-namespace constS
+namespace program
 {
-    class constS
-    {
-        public static string[] types= { "Jurnei","Medicine", "Games", "Kafe", "Produkts", "Kino", "Auto", "Klothers", "Taxi", "Animals", "Books", "Flowers" };      
-    }
-}
-namespace users
-{
-
-    struct perevod//перевод грошей
-    {
-        public uBase user;
-        public double price;
-        public DateTime date;
-        public string type;
-    }
-    struct KashBeak {
-        public string name;
-        public int procent;
-    }
-    class uBase{
-        virtual public string name { get; set; }
-        virtual public string password { get; set; }
-        virtual public string email { get; set; }
-        virtual public string telephone { get; set; }
-        virtual public double balance { get; set; }
-        public List<perevod> history=new List<perevod>();
-        virtual public bool logIn(string _email, string _password)//логінація
-        {
-            if (email == _email && password == _password)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-    }
-    class user:uBase
-    {
-        override public string name { get; set; }
-        public string surName { get; set; }
-        override public string email { get; set; }
-        override public string telephone { get; set; }
-        public string numOfCard { get; set; }//цифиркі карти
-        public DateTime dateTo { get; set; }//дато до якої дійсна карта
-        override public string password { get; set; }//то для логінації, логін буде емейлом
-        override public double balance { get; set; }//скільки грошей на рахунку
-
-        public List<KashBeak> KashBeaks = new List<KashBeak>();
-        public user(string _name, string _sName, string _email, string _telephone, string _numOfCard, DateTime _dateTo, string _password, double _bal)
-        {
-            name = _name;
-            surName = _sName;
-            email = _email;
-            telephone = _telephone;
-            numOfCard = _numOfCard;
-            dateTo = _dateTo;
-            password = _password;
-            balance = _bal;
-            foreach(string i in constS.constS.types){
-                KashBeak tmp = new KashBeak();
-                tmp.name = i;
-                tmp.procent = 0;
-                KashBeaks.Add(tmp);
-            }
-        }
-        public user()
-        {
-            name = "";
-            surName = "";
-            email = "";
-            telephone = "";
-            numOfCard = "";
-            dateTo = DateTime.Today;
-            password = "";
-            balance = 0.0;
-            foreach (string i in constS.constS.types)
-            {
-                KashBeak tmp = new KashBeak();
-                tmp.name = i;
-                tmp.procent = 0;
-                KashBeaks.Add(tmp);
-            }
-        }
-        public void addPerevod(ref user use, double s)
-        {
-            perevod perev1 = new perevod();
-            perevod perev2 = new perevod();
-            perev1.price = s;
-            perev1.user = use;
-            perev1.date = DateTime.Now;
-            perev2.price = -s;
-            perev2.user = this;
-            perev2.date = DateTime.Now;
-            balance -= s;
-            use.balance += s;
-            history.Add(perev1);
-            use.history.Add(perev2);
-        }
-        public void addPerevod(ref company use, double s)
-        {
-            perevod perev1 = new perevod();
-            perevod perev2 = new perevod();
-            perev1.price = s;
-            perev1.user = use;
-            perev1.date = DateTime.Now;
-            perev2.price = -s;
-            perev2.user = this;
-            perev2.date = DateTime.Now;
-            string tmp = use.type;
-            if (s > 0)
-            {
-                balance -= s;
-                balance += s * (Convert.ToDouble(KashBeaks.Find(KashBeak => KashBeak.name == tmp).procent) / 100);
-                use.balance += s;
-            }
-            else
-            {
-
-                balance += s;
-                use.balance -= s;
-            }
-            history.Add(perev1);
-            use.history.Add(perev2);
-        }
-    }
-    class company:uBase
-    {
-        override public string name { get; set; }
-        override public string password { get; set; }
-        override public string email { get; set; }
-        override public string telephone { get; set; }
-        override public double balance { get; set; }
-        public string type { get; set; }
-        override public bool logIn(string _email, string _password)//логінація
-        {
-            if (email == _email && password == _password)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-        public company(string _name, string _password, string _email, string _telephone, double _balance, string _type)
-        {
-            name = _name;
-            password = _password;
-            email = _email;
-            telephone = _telephone;
-            balance = _balance;
-            type = _type;
-        }
-        public void addPerevod(ref user use, double s)
-        {
-            perevod perev1 = new perevod();
-            perevod perev2 = new perevod();
-            perev1.price = s;
-            perev1.user = use;
-            perev1.date = DateTime.Now;
-            perev2.price = -s;
-            perev2.user = this;
-            perev2.date = DateTime.Now;
-            balance += s;
-            use.balance -= s;
-            history.Add(perev1);
-            use.history.Add(perev2);
-        }
-    }
-}
-
-namespace pay_sys
-{
-    
     class Program
     {
-
-        static void Main(string[] args)
+        public static void updateU(ref user m)
         {
-            List<user> mas = new List<user>();
+            try
+            {
+
+                using (SqlConnection sql = new SqlConnection(@"Data Source=NOTEBOOK\SQLEXPRESS;Initial Catalog=MiniBank;Integrated Security=True"))
+                {
+                    sql.Open();
+                    string sqlExpression = "update [user] set balance= " + m.balance + ", FirstName =\'" + m.name + "\', SecondName =\'" + m.surName + "\' where id =" + m.id + " ;";
+
+
+                    SqlCommand command = new SqlCommand(sqlExpression);
+
+                    command.Connection = sql;
+
+                    command.ExecuteNonQuery();
+
+                    sql.Close();
+
+                    ReadKey();
+
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("{0} Exception caught.", e);
+
+                ReadKey();
+            }
+        }
+        public static void updateC(ref company m)
+        {
+
+            try
+            {
+
+                using (SqlConnection sql = new SqlConnection(@"Data Source=NOTEBOOK\SQLEXPRESS;Initial Catalog=MiniBank;Integrated Security=True"))
+                {
+                    sql.Open();
+                    string sqlExpression = "update [corporation] set balance= " + m.balance + ", name =\'" + m.name + "\' where id =" + m.id + " ;";
+
+
+                    SqlCommand command = new SqlCommand(sqlExpression);
+
+                    command.Connection = sql;
+
+                    command.ExecuteNonQuery();
+
+                    sql.Close();
+
+                    ReadKey();
+
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("{0} Exception caught.", e);
+
+                ReadKey();
+            }
+        }
+        public static void payM(ref user m)
+        {
+            string connectionString = @"Data Source=.\SQLEXPRESS;Initial Catalog=MiniBank;Integrated Security=True";
+
+            SqlConnection connection = new SqlConnection(connectionString);
+
+
+            string sqlExpression = "SELECT * FROM [user]";
+            // Открываем подключение
+            connection.Open();
+            SqlCommand command = new SqlCommand(sqlExpression, connection);
+            SqlDataReader reader = command.ExecuteReader();
+            if (reader.HasRows) // если есть данные
+            {
+
+                WriteLine("Enter num of card or name fo company");
+                string a = ReadLine();
+                bool ad = true;
+                while (reader.Read()) // построчно считываем данные
+                {
+                    object f1 = reader.GetValue(0);
+                    object f7 = reader.GetValue(6);
+                    object f8 = reader.GetValue(7);
+
+
+                    f7 = addingFunk.dellSpace(f7);
+                    WriteLine(f1.ToString());
+                    WriteLine(f7.ToString()+"    "+a);
+                    WriteLine(f7.ToString()==a);
+                    WriteLine(f8.ToString());
+                    ReadKey();
+                    if (Convert.ToString(f7) == a)
+                    {
+                        WriteLine("Enter sum");
+                        double tmp = Convert.ToDouble(ReadLine());
+                        if (tmp < m.balance)
+                        {
+                            user tmp1 = new user();
+                            tmp1.id = Convert.ToInt32(f1);
+                            tmp1.balance = Convert.ToDouble(f8);
+                            m.addPerevod(ref tmp1, tmp);
+
+                            updateU(ref tmp1);
+                            updateU(ref m);
+                            ad = false;
+                        }
+                    }
+
+                }
+
+                connection.Close();
+                reader.Close();
+                if (ad)
+                {
+
+                    while (reader.Read()) // построчно считываем данные
+                    {
+                        object f1 = reader.GetValue(0);
+                        object f6 = reader.GetValue(5);
+                        object f2 = reader.GetValue(1);
+
+
+                        f2 = addingFunk.dellSpace(f2);
+                        if (Convert.ToString(f2) == a)
+                        {
+                            WriteLine("Enter sum");
+                            double tmp = Convert.ToDouble(ReadLine());
+                            if (tmp < m.balance)
+                            {
+                                company tmp1 = new company();
+                                tmp1.id = Convert.ToInt32(f1);
+                                tmp1.balance = Convert.ToDouble(f6);
+                                m.addPerevod(ref tmp1, tmp);
+                                updateC(ref tmp1);
+                                updateU(ref m);
+                                
+                            }
+                        }
+
+                        connection.Close();
+                        reader.Close();
+                    }
+                }
+            }
+        }
+        public static void Edit(ref user m)
+        {
+            while (true)
+            {
+                Clear();
+                WriteLine("1 name");
+                WriteLine("2 sur name");
+                WriteLine("3 email");
+                WriteLine("4 telephone");
+                WriteLine("5 password");
+                WriteLine("6 beak");
+                int s = Convert.ToInt32(ReadLine());
+                if (s == 1)
+                {
+                    WriteLine("Enter new name");
+                    string a = ReadLine();
+                    m.name = a;
+                    updateU(ref m);
+                    
+                }
+                else if (s == 2) {
+                    WriteLine("Enter new sur name");
+                    string a = ReadLine();
+                    m.surName = a;
+                    updateU(ref m);
+                }
+                else if (s == 3) {
+                    WriteLine("Enter emil");
+                    string a = ReadLine();
+                    m.email = a;
+                    updateU(ref m);
+                }
+                else if (s == 4) {
+                    WriteLine("Enter new telephone");
+                    int a = Convert.ToInt32(ReadLine());
+                    m.telephone = a;
+                    updateU(ref m);
+                }
+                else if (s == 5) {
+
+                    WriteLine("Enter new password");
+                    string a = ReadLine();
+                    m.password = a;
+                    updateU(ref m);
+                    
+                }
+                else if (s == 6) { break; }
+            }
+        }
+        static bool join(ref user m)
+        {
+            try
+            {
+                string connectionString = @"Data Source=.\SQLEXPRESS;Initial Catalog=MiniBank;Integrated Security=True";
+                
+                SqlConnection connection = new SqlConnection(connectionString);
+
+
+                string sqlExpression = "SELECT * FROM [user]";
+                // Открываем подключение
+                connection.Open();
+                SqlCommand command = new SqlCommand(sqlExpression, connection);
+                SqlDataReader reader = command.ExecuteReader();
+                if (reader.HasRows) // если есть данные
+                {
+                    string l, p;
+                    Console.WriteLine("Enter login");
+                    l = Console.ReadLine();
+
+                    Console.WriteLine("Enter password");
+                    p = Console.ReadLine();
+                    // выводим названия столбцов
+
+                    while (reader.Read()) // построчно считываем данные
+                    {
+                        object f1 = reader.GetValue(0);
+                        object f2 = reader.GetValue(1);
+                        object f3 = reader.GetValue(2);
+                        object f4 = reader.GetValue(3);
+                        object f5 = reader.GetValue(4);
+                        object f6 = reader.GetValue(5);
+                        object f7 = reader.GetValue(6);
+                        object f8 = reader.GetValue(7);
+                        object f9 = reader.GetValue(8);
+
+                        f4 = addingFunk.dellSpace(f4);
+                        f5 = addingFunk.dellSpace(f5);
+                        f6 = addingFunk.dellSpace(f6);
+                        
+                        if (Convert.ToString(f4) == l || Convert.ToString(f5) == l)
+                        {
+                            if (Convert.ToString(f6) == p)
+                            {
+                                reader.Close();
+                                m.id = Convert.ToInt32(f1);
+                                m.name = Convert.ToString(f2);
+                                m.surName = Convert.ToString(f3);
+                                m.email = Convert.ToString(f4);
+                                m.telephone = Convert.ToInt32(f5);
+                                m.password = Convert.ToString(f6);
+                                m.numOfCard = Convert.ToString(f7);
+                                m.balance = Convert.ToDouble(f8);
+                                int tmp = Convert.ToInt32(f9);
+
+                                sqlExpression = "SELECT * FROM Keashbeak";
+                                // Открываем подключение
+                                command = new SqlCommand(sqlExpression, connection);
+                                reader = command.ExecuteReader();
+                                while (reader.Read()) // построчно считываем данные
+                                {
+                                    f1 = reader.GetValue(0);
+                                    f2 = reader.GetValue(1);
+                                    f3 = reader.GetValue(2);
+                                    f4 = reader.GetValue(3);
+                                    f5 = reader.GetValue(4);
+                                    f6 = reader.GetValue(5);
+                                    f7 = reader.GetValue(6);
+                                    f8 = reader.GetValue(7);
+                                    f9 = reader.GetValue(8);
+                                    object f10 = reader.GetValue(9);
+                                    object f11 = reader.GetValue(10);
+                                    object f12 = reader.GetValue(11);
+                                    object f13 = reader.GetValue(12);
+                                    if (Convert.ToInt32(f1) == tmp)
+                                    {
+                                        KashBeak tmp1 = new KashBeak();
+                                        tmp1.procent = Convert.ToInt32(f2);
+                                        tmp1.name = reader.GetName(1);
+                                        m.KashBeaks.Add(tmp1);
+                                        tmp1.procent = Convert.ToInt32(f3);
+                                        tmp1.name = reader.GetName(2);
+                                        m.KashBeaks.Add(tmp1);
+                                        tmp1.procent = Convert.ToInt32(f4);
+                                        tmp1.name = reader.GetName(3);
+                                        m.KashBeaks.Add(tmp1);
+                                        tmp1.procent = Convert.ToInt32(f5);
+                                        tmp1.name = reader.GetName(4);
+                                        m.KashBeaks.Add(tmp1);
+                                        tmp1.procent = Convert.ToInt32(f6);
+                                        tmp1.name = reader.GetName(5);
+                                        m.KashBeaks.Add(tmp1);
+                                        tmp1.procent = Convert.ToInt32(f7);
+                                        tmp1.name = reader.GetName(6);
+                                        m.KashBeaks.Add(tmp1);
+                                        tmp1.procent = Convert.ToInt32(f8);
+                                        tmp1.name = reader.GetName(7);
+                                        m.KashBeaks.Add(tmp1);
+                                        tmp1.procent = Convert.ToInt32(f9);
+                                        tmp1.name = reader.GetName(8);
+                                        m.KashBeaks.Add(tmp1);
+                                        tmp1.procent = Convert.ToInt32(f10);
+                                        tmp1.name = reader.GetName(9);
+                                        m.KashBeaks.Add(tmp1);
+                                        tmp1.procent = Convert.ToInt32(f11);
+                                        tmp1.name = reader.GetName(10);
+                                        m.KashBeaks.Add(tmp1);
+                                        tmp1.procent = Convert.ToInt32(f12);
+                                        tmp1.name = reader.GetName(11);
+                                        m.KashBeaks.Add(tmp1);
+                                        tmp1.procent = Convert.ToInt32(f13);
+                                        tmp1.name = reader.GetName(12);
+                                        m.KashBeaks.Add(tmp1);
+                                    }
+                                }
+                                connection.Close();
+                                reader.Close();
+                                
+                                return true;
+                            }
+                        }
+                    }
+
+
+                    
+                }
+                reader.Close();
+                connection.Close();
+
+                
+                return false;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("{0} Exception caught.", e);
+
+                ReadKey();
+                return false;
+                
+            }
+        }
+        static void all(ref user m)
+        {
             int s;
-            while (true) {
-                try {
+            while (true)
+            {
+                try
+                {
                     Console.Clear();
-                    WriteLine("1 Add user");
-                    WriteLine("2 Add perevod");
+                   
+                    WriteLine("1 pay");
+                    WriteLine("2 edit pola");
                     WriteLine("3 add many");
-                    WriteLine("4 Print all");
+                    WriteLine("4 Print information");
                     WriteLine("5 exit");
                     s = Convert.ToInt32(ReadLine());
                     if (s == 1)
                     {
-                        Clear();
-                        user tmp = new user();
-                        WriteLine("Enter name");
-                        tmp.name = ReadLine();
-                        WriteLine("Enter sur name");
-                        tmp.surName = ReadLine();
-                        WriteLine("Enter email");
-                        tmp.email = ReadLine();
-                        WriteLine("Enter telephone");
-                        tmp.telephone = ReadLine();
-                        WriteLine("Enter num of card");
-                        tmp.numOfCard = ReadLine();
-                        DateTime sw = new DateTime();
-                        sw=sw.AddDays(12-1);
-                        sw=sw.AddMonths(02-1);
-                        sw=sw.AddYears(2020-1);
-                        tmp.dateTo = sw;
-                        WriteLine("Enter password");
-                        tmp.password = ReadLine();
-                        WriteLine("Enter balance");
-                        tmp.balance = Convert.ToInt32(ReadLine());
-                        mas.Add(tmp);
-                        ReadKey();
+                        payM(ref m);
                     }
-                    else if (s == 2) {
-                        string name1, name2;
-                        WriteLine("Enter 1 name");
-                        name1 = ReadLine();
-                        WriteLine("Enter 2 name");
-                        name2 = ReadLine();
-                        user u1 = mas.Find(user => user.name == name1);
-                        user u2 = mas.Find(user => user.name == name2);
-                        if (u1 == null || u2 == null)
-                        {
-                            Console.WriteLine("Not found");
-                        }
-                        else
-                        {
-                            WriteLine("Enter many");
-                            double ss = Convert.ToDouble(ReadLine());
-                            u1.addPerevod(ref u2, ss);
-
-                        }
-                        ReadKey();
-                    }
+                    else if (s == 2) { Edit(ref m); }
+                
                     else if (s == 3) {
-                        string name1;
-                        WriteLine("Enter 2 name");
-                        name1 = ReadLine();
-                        user u1 = mas.Find(user => user.name == name1);
-                        double qwe = Convert.ToDouble(ReadLine());
-                        u1.balance += qwe;
+                        WriteLine("Enter many");
+                        double tmp = Convert.ToDouble(ReadLine());
+                        m.balance += tmp;
+                        updateU(ref m);
+                    }
+                    else if (s == 4)
+                    {
+                        WriteLine("Id: " + m.id);
+                        WriteLine("Name: " + m.name);
+                        WriteLine("Sur name: " + m.surName);
+                        WriteLine("Num of card: " + m.numOfCard);
+                        WriteLine("Password: " + m.password);
+                        WriteLine("Telephone: " + m.telephone);
+                        WriteLine("Email: " + m.email);
+                        WriteLine("Date: " + m.dateTo);
+                        WriteLine("Balance: " + m.balance);
+                        WriteLine("History: ");
+                        foreach (perevod i in m.history)
+                        {
+                            WriteLine("\tUser: " + i.user);
+                            WriteLine("\tType: " + i.type);
+                            WriteLine("\tPrice: " + i.price);
+                            WriteLine("\tDate: " + i.date);
+                        }
                         ReadKey();
                     }
-                    else if (s == 4) {
-                        foreach (user i in mas)
-                        {
-                            WriteLine($"Name: {i.name}");
-                            WriteLine($"Sur name: {i.surName}");
-                            WriteLine($"number of card: {i.numOfCard}");
-                            WriteLine($"Password: {i.password}");
-                            WriteLine($"Telephone: {i.telephone}");
-                            WriteLine($"Email: {i.email}");
-                            WriteLine($"Date to: {i.dateTo.Day}.{i.dateTo.Month}.{i.dateTo.Year}");
-                            WriteLine($"Balance: {i.balance}");
-                            WriteLine("History: ");
-                            foreach (perevod j in i.history)
-                            {
-                                WriteLine($"\tName:{j.user.name}");
-                                WriteLine($"\tMany:{j.price}");
-                                WriteLine($"\tDate:{j.date.Hour}:{j.date.Minute}, {j.date.Day}.{j.date.Month}.{j.date.Year}");
-                            }
-                            ReadKey();
-                        }
-                    }
-                    else if (s == 5) { }
+                    else if (s == 5) { Environment.Exit(0); }
                 }
-                catch { };
+                catch (Exception e)
+                {
+                    Console.WriteLine("{0} Exception caught.", e);
+
+                    ReadKey();
+                }
             }
+        }
+        static void Main(string[] args)
+        {
+            user m=new user();
+            while(!join(ref m)) { };
+            
+            all(ref m);
         }
     }
 }
