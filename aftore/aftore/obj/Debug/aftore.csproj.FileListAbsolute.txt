@@ -1,0 +1,13 @@
+C:\Users\lazok\source\repos\aftore\aftore\obj\Debug\aftore.csprojAssemblyReference.cache
+C:\Users\lazok\source\repos\aftore\aftore\obj\Debug\aftore.Properties.Resources.resources
+C:\Users\lazok\source\repos\aftore\aftore\obj\Debug\aftore.csproj.GenerateResource.cache
+C:\Users\lazok\source\repos\aftore\aftore\obj\Debug\aftore.csproj.CoreCompileInputs.cache
+C:\Users\lazok\source\repos\aftore\aftore\bin\Debug\aftore.exe.config
+C:\Users\lazok\source\repos\aftore\aftore\bin\Debug\aftore.exe
+C:\Users\lazok\source\repos\aftore\aftore\bin\Debug\aftore.pdb
+C:\Users\lazok\source\repos\aftore\aftore\obj\Debug\aftore.exe
+C:\Users\lazok\source\repos\aftore\aftore\obj\Debug\aftore.pdb
+C:\Users\lazok\source\repos\aftore\aftore\obj\Debug\Framework.Form2.resources
+C:\Users\lazok\source\repos\aftore\aftore\obj\Debug\Framework.Form3.resources
+C:\Users\lazok\source\repos\aftore\aftore\obj\Debug\Framework.Form4.resources
+C:\Users\lazok\source\repos\aftore\aftore\obj\Debug\Framework.Form7.resources
